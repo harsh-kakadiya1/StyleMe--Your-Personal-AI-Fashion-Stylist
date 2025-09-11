@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_remix/flutter_remix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'providers/wardrobe_provider.dart';
@@ -16,19 +17,62 @@ class StyleMeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return ChangeNotifierProvider(
       create: (context) => WardrobeProvider(),
       child: MaterialApp(
-        title: 'Style Me',
+        title: 'StyleMe',
         theme: ThemeData(
-          primarySwatch: Colors.purple,
           useMaterial3: true,
-          textTheme: GoogleFonts.latoTextTheme(Theme.of(context).textTheme),
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.purple,
-            brightness: Brightness.light,
+          scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+          primaryColor: const Color(0xFF2C3E50),
+          textTheme: GoogleFonts.outfitTextTheme(textTheme).copyWith(
+            displayLarge: GoogleFonts.prata(
+              textStyle: textTheme.displayLarge,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF2C3E50),
+            ),
+            headlineSmall: GoogleFonts.prata(
+              textStyle: textTheme.headlineSmall,
+              color: const Color(0xFF2C3E50),
+            ),
+            titleLarge: GoogleFonts.outfit(
+              textStyle: textTheme.titleLarge,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF2C3E50),
+            ),
+            bodyMedium: GoogleFonts.outfit(
+              textStyle: textTheme.bodyMedium,
+              color: const Color(0xFF34495E),
+            ),
           ),
-          scaffoldBackgroundColor: Colors.grey[50],
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF2C3E50),
+            primary: const Color(0xFF2C3E50),
+            secondary: const Color(0xFFD2B48C),
+            background: const Color(0xFFF7F7F7),
+            onBackground: const Color(0xFF2C3E50),
+            error: const Color(0xFFE74C3C),
+          ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: const Color(0xFFF7F7F7),
+            foregroundColor: const Color(0xFF2C3E50),
+            elevation: 0,
+            centerTitle: true,
+            titleTextStyle: GoogleFonts.prata(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF2C3E50),
+            ),
+          ),
+          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+            backgroundColor: Colors.white,
+            selectedItemColor: Color(0xFF2C3E50),
+            unselectedItemColor: Color(0xFFBDC3C7),
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
+          ),
         ),
         home: const StyleMeHomePage(),
       ),
@@ -44,189 +88,84 @@ class StyleMeHomePage extends StatefulWidget {
 }
 
 class _StyleMeHomePageState extends State<StyleMeHomePage> {
-  int _selectedIndex = 2; // Start with the "Add clothes" tab selected
+  int _selectedIndex = 0;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'STYLE ME',
-          style: GoogleFonts.playfairDisplay(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            letterSpacing: 1.2,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shadowColor: Colors.black26,
-      ),
-      body: PageTransitionSwitcher(
-        transitionBuilder:
-            (
-              Widget child,
-              Animation<double> primaryAnimation,
-              Animation<double> secondaryAnimation,
-            ) {
-              return FadeThroughTransition(
-                animation: primaryAnimation,
-                secondaryAnimation: secondaryAnimation,
-                child: child,
-              );
-            },
-        child: _buildBody(),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          backgroundColor: Colors.white,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Colors.grey[600],
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-          ),
-          elevation: 8,
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.style, size: _selectedIndex == 0 ? 28 : 24),
-              label: 'Make Pair',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.auto_awesome,
-                size: _selectedIndex == 1 ? 28 : 24,
-              ),
-              label: 'AI Suggestions',
-            ),
-            BottomNavigationBarItem(
-              icon: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.add_a_photo,
-                  color: Colors.white,
-                  size: _selectedIndex == 2 ? 32 : 28,
-                ),
-              ),
-              label: 'Add Clothes',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.calendar_month,
-                size: _selectedIndex == 3 ? 28 : 24,
-              ),
-              label: 'Weekly Planner',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.checkroom, size: _selectedIndex == 4 ? 28 : 24),
-              label: 'Saved Outfits',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return const MakePairScreen();
-      case 2:
-        return const AddClothesScreen();
-      case 4:
-        return const SavedOutfitsScreen();
-      default:
-        return _buildPlaceholder(
-          icon: _selectedIndex == 1 ? Icons.auto_awesome : Icons.calendar_month,
-          title: _selectedIndex == 1 ? 'AI Suggestions' : 'Weekly Planner',
-          subtitle: 'This feature is coming soon!',
-        );
-    }
-  }
-
-  Widget _buildPlaceholder({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      key: ValueKey(title),
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1),
-            Colors.white,
-          ],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 80,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  static const List<Widget> _widgetOptions = <Widget>[
+    AddClothesScreen(),
+    MakePairScreen(),
+    SavedOutfitsScreen(),
+    Center(child: Text('Coming Soon')),
+    Center(child: Text('Coming Soon')),
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('StyleMe'),
+      ),
+      body: PageTransitionSwitcher(
+        transitionBuilder: (
+          Widget child,
+          Animation<double> primaryAnimation,
+          Animation<double> secondaryAnimation,
+        ) {
+          return FadeThroughTransition(
+            animation: primaryAnimation,
+            secondaryAnimation: secondaryAnimation,
+            child: child,
+          );
+        },
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _widgetOptions,
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey[200]!, width: 1.0),
+          ),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(FlutterRemix.shirt_line),
+              activeIcon: Icon(FlutterRemix.shirt_fill),
+              label: 'Wardrobe',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(FlutterRemix.links_line),
+              activeIcon: Icon(FlutterRemix.links_fill),
+              label: 'Pair',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(FlutterRemix.heart_3_line),
+              activeIcon: Icon(FlutterRemix.heart_3_fill),
+              label: 'Saved',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(FlutterRemix.magic_line),
+              activeIcon: Icon(FlutterRemix.magic_fill),
+              label: 'Suggest',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(FlutterRemix.user_line),
+              activeIcon: Icon(FlutterRemix.user_fill),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+        ),
+      ),
+    );
   }
 }
