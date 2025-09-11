@@ -295,38 +295,39 @@ class _MakePairScreenState extends State<MakePairScreen> {
                                     Positioned(
                                       bottom: 16,
                                       right: 16,
-                                      child: ElevatedButton.icon(
-                                        onPressed:
-                                            (topItems.isNotEmpty &&
+                                      child: GestureDetector(
+                                        onTap: (topItems.isNotEmpty &&
                                                 bottomItems.isNotEmpty)
                                             ? _saveOutfitCombination
                                             : null,
-                                        icon: const Icon(
-                                          Icons.description,
-                                          size: 20,
-                                        ),
-                                        label: const Text(
-                                          'Save',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          foregroundColor: Colors.white,
+                                        child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 16,
                                             vertical: 12,
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.7),
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
-                                          elevation: 4,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.bookmark,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Save',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -444,20 +445,6 @@ class _MakePairScreenState extends State<MakePairScreen> {
                     ),
                   ],
                 ),
-              ),
-            ),
-
-            // Selection indicator
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.check, color: Colors.white, size: 20),
               ),
             ),
           ],

@@ -230,19 +230,16 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
             Positioned(
               top: 8,
               right: 8,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.9),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white, size: 20),
-                  onPressed: () => _showDeleteDialog(outfit.id),
-                  padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
+              child: GestureDetector(
+                onTap: () => _showDeleteDialog(outfit.id),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey[300]!, width: 1),
                   ),
+                  child: Icon(Icons.close, size: 16, color: Colors.grey[600]),
                 ),
               ),
             ),
@@ -418,4 +415,3 @@ class ImageDisplayWidget extends StatelessWidget {
     );
   }
 }
-
