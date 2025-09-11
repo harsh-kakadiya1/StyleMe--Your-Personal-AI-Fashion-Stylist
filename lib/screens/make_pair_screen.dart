@@ -296,7 +296,8 @@ class _MakePairScreenState extends State<MakePairScreen> {
                                       bottom: 16,
                                       right: 16,
                                       child: GestureDetector(
-                                        onTap: (topItems.isNotEmpty &&
+                                        onTap:
+                                            (topItems.isNotEmpty &&
                                                 bottomItems.isNotEmpty)
                                             ? _saveOutfitCombination
                                             : null,
@@ -306,8 +307,12 @@ class _MakePairScreenState extends State<MakePairScreen> {
                                             vertical: 12,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.7),
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,

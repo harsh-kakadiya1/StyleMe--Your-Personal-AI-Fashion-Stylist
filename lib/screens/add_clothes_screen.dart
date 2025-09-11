@@ -125,6 +125,33 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
     );
   }
 
+  void _showDeleteDialog(String itemId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Item'),
+          content: const Text(
+            'Are you sure you want to delete this clothing item from your wardrobe?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteClothingItem(itemId);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<WardrobeProvider>(
@@ -176,24 +203,33 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
               // Add clothing button
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
-                child: ElevatedButton.icon(
-                  onPressed: _addNewClothing,
-                  icon: const Icon(Icons.add_a_photo, size: 24),
-                  label: const Text(
-                    'Add New Clothing',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
+                child: GestureDetector(
+                  onTap: _addNewClothing,
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                      horizontal: 24,
+                      vertical: 14,
                     ),
-                    shape: RoundedRectangleBorder(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    elevation: 4,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Add New Clothing',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -273,7 +309,7 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
               top: 8,
               right: 8,
               child: GestureDetector(
-                onTap: () => _deleteClothingItem(item.id),
+                onTap: () => _showDeleteDialog(item.id),
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
