@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_remix/flutter_remix.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -26,31 +27,23 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
   }
 
   Future<void> _addNewClothing() async {
-    // Store context before async operations
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final provider = context.read<WardrobeProvider>();
 
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+        imageQuality: 80,
       );
 
       if (pickedFile != null) {
-        // Show category selection dialog
         final String? category = await _showCategorySelectionDialog();
         if (category != null) {
-          // Show type selection dialog
           final String? type = await _showTypeSelectionDialog(category);
           if (type != null) {
-            // Save image to local storage
             final String savedPath = await _copyImageToLocalStorage(
               File(pickedFile.path),
             );
-
-            // Create clothing item
             final ClothingItem newItem = ClothingItem(
               id: DateTime.now().millisecondsSinceEpoch.toString(),
               imagePath: savedPath,
@@ -58,30 +51,15 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
               type: type,
               addedDate: DateTime.now(),
             );
-
-            // Add to provider
             await provider.addClothingItem(newItem);
-
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(
-                  content: Text('Clothing item added successfully!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
+            scaffoldMessenger.showSnackBar(
+              const SnackBar(content: Text('Item added to wardrobe.')),
+            );
           }
         }
       }
     } catch (e) {
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Error adding clothing: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -89,117 +67,62 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
     return showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return SimpleDialog(
           title: const Text('Select Category'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.checkroom),
-                title: const Text('Top Wear'),
-                onTap: () => Navigator.of(context).pop('top'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.accessibility),
-                title: const Text('Bottom Wear'),
-                onTap: () => Navigator.of(context).pop('bottom'),
-              ),
-            ],
-          ),
+          children: <Widget>[
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, 'top'),
+              child: const Text('Top Wear'),
+            ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, 'bottom'),
+              child: const Text('Bottom Wear'),
+            ),
+          ],
         );
       },
     );
   }
 
   Future<String?> _showTypeSelectionDialog(String category) async {
-    List<String> types = [];
-    String title = '';
-
-    if (category == 'top') {
-      title = 'Select Top Wear Type';
-      types = [
-        'T-Shirt',
-        'Shirt',
-        'Sweater',
-        'Jacket',
-        'Hoodie',
-        'Blouse',
-        'Tank Top',
-      ];
-    } else {
-      title = 'Select Bottom Wear Type';
-      types = [
-        'Jeans',
-        'Formal Pants',
-        'Track Pants',
-        'Cargo Pants',
-        'Shorts',
-        'Skirt',
-        'Leggings',
-      ];
-    }
-
+    final types = category == 'top'
+        ? ['T-Shirt', 'Shirt', 'Sweater', 'Jacket', 'Hoodie']
+        : ['Jeans', 'Pants', 'Shorts', 'Skirt'];
     return showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: types.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(types[index]),
-                  onTap: () => Navigator.of(context).pop(types[index]),
-                );
-              },
-            ),
-          ),
+        return SimpleDialog(
+          title: Text('Select ${category == 'top' ? 'Top' : 'Bottom'} Type'),
+          children: types
+              .map(
+                (type) => SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, type),
+                  child: Text(type),
+                ),
+              )
+              .toList(),
         );
       },
     );
   }
 
   Future<String> _copyImageToLocalStorage(File imageFile) async {
-    final Directory appDir = await getApplicationDocumentsDirectory();
-    final Directory wardrobeDir = Directory('${appDir.path}/wardrobe');
-
+    final appDir = await getApplicationDocumentsDirectory();
+    final wardrobeDir = Directory('${appDir.path}/wardrobe');
     if (!await wardrobeDir.exists()) {
       await wardrobeDir.create(recursive: true);
     }
-
-    final String fileName =
-        'clothing_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final String newPath = '${wardrobeDir.path}/$fileName';
-
+    final fileName = 'clothing_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final newPath = '${wardrobeDir.path}/$fileName';
     await imageFile.copy(newPath);
     return newPath;
   }
 
   Future<void> _deleteClothingItem(String id) async {
-    try {
-      await context.read<WardrobeProvider>().deleteClothingItem(id);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Clothing item removed'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting item: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    await context.read<WardrobeProvider>().deleteClothingItem(id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Item removed from wardrobe.')),
+    );
   }
 
   @override
@@ -349,19 +272,16 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
             Positioned(
               top: 8,
               right: 8,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white, size: 20),
-                  onPressed: () => _deleteClothingItem(item.id),
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
+              child: GestureDetector(
+                onTap: () => _deleteClothingItem(item.id),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey[300]!, width: 1),
                   ),
+                  child: Icon(Icons.close, size: 16, color: Colors.grey[600]),
                 ),
               ),
             ),
@@ -372,29 +292,34 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
               left: 8,
               right: 8,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      item.category.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Icon(
+                      item.category == 'top'
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: Colors.white,
+                      size: 14,
                     ),
-                    Text(
-                      item.type,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        item.type,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -410,56 +335,25 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
 
 class ImageDisplayWidget extends StatelessWidget {
   final String imagePath;
-
   const ImageDisplayWidget({super.key, required this.imagePath});
+
+  Future<bool> _checkFileExists() async {
+    return File(imagePath).exists();
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
       future: _checkFileExists(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+        if (snapshot.data == true) {
+          return Image.file(File(imagePath), fit: BoxFit.cover);
         }
-
-        if (snapshot.hasData && snapshot.data == true) {
-          return Image.file(
-            File(imagePath),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return _buildErrorWidget();
-            },
-          );
-        } else {
-          return _buildErrorWidget();
-        }
+        return Container(
+          color: Colors.grey[200],
+          child: Icon(FlutterRemix.error_warning_line, color: Colors.grey[400]),
+        );
       },
-    );
-  }
-
-  Future<bool> _checkFileExists() async {
-    try {
-      final file = File(imagePath);
-      return await file.exists();
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Widget _buildErrorWidget() {
-    return Container(
-      color: Colors.grey[200],
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-          const SizedBox(height: 8),
-          Text(
-            'Image not found',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
-          ),
-        ],
-      ),
     );
   }
 }

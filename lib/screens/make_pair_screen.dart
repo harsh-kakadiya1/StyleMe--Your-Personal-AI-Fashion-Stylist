@@ -22,12 +22,17 @@ class _MakePairScreenState extends State<MakePairScreen> {
     super.initState();
     // Initialize page controllers at middle for infinite swipe
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _topPageController.jumpToPage(5000);
-      _bottomPageController.jumpToPage(5000);
-
       final provider = context.read<WardrobeProvider>();
       provider.loadClothingItems();
       provider.loadSavedOutfits();
+
+      if (_topPageController.hasClients && provider.topWearItems.isNotEmpty) {
+        _topPageController.jumpToPage(5000);
+      }
+      if (_bottomPageController.hasClients &&
+          provider.bottomWearItems.isNotEmpty) {
+        _bottomPageController.jumpToPage(5000);
+      }
     });
   }
 
