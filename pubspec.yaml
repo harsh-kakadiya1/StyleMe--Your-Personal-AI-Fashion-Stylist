@@ -52,6 +52,7 @@ dependencies:
 
   # Google Fonts for custom text styles
   google_fonts: ^6.2.1
+  flutter_remix: ^0.0.3
 
 dev_dependencies:
   flutter_test:
