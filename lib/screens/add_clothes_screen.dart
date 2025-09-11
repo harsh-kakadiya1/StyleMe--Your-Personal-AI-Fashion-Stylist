@@ -171,77 +171,103 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
               ],
             ),
           ),
-          child: Column(
-            children: [
-              // Header section
-              Container(
-                padding: const EdgeInsets.all(20),
+          child: CustomScrollView(
+            slivers: [
+              // Header section and button as part of scrollable content
+              SliverToBoxAdapter(
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.add_a_photo,
-                      size: 60,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Add New Clothing',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                    // Header section
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.add_a_photo,
+                            size: 60,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Add New Clothing',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${clothingItems.length} clothing items in your wardrobe',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${clothingItems.length} clothing items in your wardrobe',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+
+                    // Add clothing button
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GestureDetector(
+                        onTap: _addNewClothing,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Add Clothes',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
+
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
 
-              // Add clothing button
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                child: GestureDetector(
-                  onTap: _addNewClothing,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_a_photo, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Add New Clothing',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
               // Clothing items grid
-              Expanded(
-                child: clothingItems.isEmpty
-                    ? _buildEmptyState()
-                    : _buildClothingGrid(clothingItems),
-              ),
+              clothingItems.isEmpty
+                  ? SliverFillRemaining(child: _buildEmptyState())
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.8,
+                            ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          return _buildClothingCard(clothingItems[index]);
+                        }, childCount: clothingItems.length),
+                      ),
+                    ),
             ],
           ),
         );
@@ -272,22 +298,6 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildClothingGrid(List<ClothingItem> clothingItems) {
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: clothingItems.length,
-      itemBuilder: (context, index) {
-        return _buildClothingCard(clothingItems[index]);
-      },
     );
   }
 

@@ -303,15 +303,15 @@ class _MakePairScreenState extends State<MakePairScreen> {
                                             : null,
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 12,
+                                            horizontal: 12,
+                                            vertical: 8,
                                           ),
                                           decoration: BoxDecoration(
                                             color: Colors.black.withValues(
                                               alpha: 0.7,
                                             ),
                                             borderRadius: BorderRadius.circular(
-                                              12,
+                                              10,
                                             ),
                                           ),
                                           child: Row(
@@ -320,14 +320,14 @@ class _MakePairScreenState extends State<MakePairScreen> {
                                               Icon(
                                                 Icons.bookmark,
                                                 color: Colors.white,
-                                                size: 16,
+                                                size: 14,
                                               ),
-                                              const SizedBox(width: 6),
+                                              const SizedBox(width: 4),
                                               Text(
                                                 'Save',
                                                 style: TextStyle(
                                                   color: Colors.white,
-                                                  fontSize: 14,
+                                                  fontSize: 12,
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
