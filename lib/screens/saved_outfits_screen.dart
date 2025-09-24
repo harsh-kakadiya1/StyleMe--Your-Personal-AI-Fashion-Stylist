@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_remix/flutter_remix.dart';
 import '../providers/wardrobe_provider.dart';
 import '../models/clothing_item.dart';
 import 'dart:io';
@@ -18,8 +19,7 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
     // Load saved outfits when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<WardrobeProvider>();
-      provider.loadClothingItems();
-      provider.loadSavedOutfits();
+      provider.initializeData();
     });
   }
 
@@ -40,6 +40,34 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error removing outfit: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleStar(String outfitId) async {
+    try {
+      await context.read<WardrobeProvider>().toggleOutfitStar(outfitId);
+
+      if (mounted) {
+        final provider = context.read<WardrobeProvider>();
+        final isStarred = provider.isOutfitStarred(outfitId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isStarred ? 'Added to favorites' : 'Removed from favorites',
+            ),
+            backgroundColor: isStarred ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating favorite: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -226,21 +254,56 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
               ),
             ),
 
-            // Delete button overlay
+            // Action buttons overlay
             Positioned(
               top: 8,
               right: 8,
-              child: GestureDetector(
-                onTap: () => _showDeleteDialog(outfit.id),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[300]!, width: 1),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Star button
+                  GestureDetector(
+                    onTap: () => _toggleStar(outfit.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                      ),
+                      child: Consumer<WardrobeProvider>(
+                        builder: (context, provider, child) {
+                          final isStarred = provider.isOutfitStarred(outfit.id);
+                          return Icon(
+                            isStarred
+                                ? FlutterRemix.star_fill
+                                : FlutterRemix.star_line,
+                            size: 16,
+                            color: isStarred ? Colors.amber : Colors.grey[600],
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                  child: Icon(Icons.close, size: 16, color: Colors.grey[600]),
-                ),
+                  const SizedBox(width: 4),
+                  // Delete button
+                  GestureDetector(
+                    onTap: () => _showDeleteDialog(outfit.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 

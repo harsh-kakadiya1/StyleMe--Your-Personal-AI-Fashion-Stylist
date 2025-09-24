@@ -2,11 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/clothing_item.dart';
 import '../models/outfit_schedule.dart';
+import '../models/user_profile.dart';
 
 class WardrobeProvider extends ChangeNotifier {
   List<ClothingItem> _clothingItems = [];
   List<OutfitCombination> _savedOutfits = [];
   List<OutfitSchedule> _outfitSchedules = [];
+  UserProfile? _userProfile;
+  List<OutfitTag> _outfitTags = [];
+  List<TaggedOutfit> _taggedOutfits = [];
 
   // Getters
   List<ClothingItem> get clothingItems => _clothingItems;
@@ -16,6 +20,20 @@ class WardrobeProvider extends ChangeNotifier {
       _clothingItems.where((item) => item.category == 'bottom').toList();
   List<OutfitCombination> get savedOutfits => _savedOutfits;
   List<OutfitSchedule> get outfitSchedules => _outfitSchedules;
+  UserProfile? get userProfile => _userProfile;
+  List<OutfitTag> get outfitTags => _outfitTags;
+  List<TaggedOutfit> get taggedOutfits => _taggedOutfits;
+  List<OutfitCombination> get starredOutfits => _savedOutfits.where((outfit) {
+    final taggedOutfit = _taggedOutfits.firstWhere(
+      (tagged) => tagged.outfitId == outfit.id,
+      orElse: () => TaggedOutfit(
+        outfitId: outfit.id,
+        tagIds: [],
+        createdAt: DateTime.now(),
+      ),
+    );
+    return taggedOutfit.isStarred;
+  }).toList();
 
   // Load clothing items from storage
   Future<void> loadClothingItems() async {
@@ -310,6 +328,239 @@ class WardrobeProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  // User Profile Methods
+
+  // Load user profile from storage
+  Future<void> loadUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? profileJson = prefs.getString('user_profile');
+
+    if (profileJson != null) {
+      _userProfile = UserProfile.fromJson(
+        Map.fromEntries(
+          profileJson.split('|').map((e) {
+            final parts = e.split(':');
+            return MapEntry(parts[0], parts[1]);
+          }),
+        ),
+      );
+      notifyListeners();
+    }
+  }
+
+  // Save user profile to storage
+  Future<void> saveUserProfile() async {
+    if (_userProfile != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final String profileJson =
+          'id:${_userProfile!.id}|name:${_userProfile!.name}|birthday:${_userProfile!.birthday?.toIso8601String() ?? ''}|profilePhotoPath:${_userProfile!.profilePhotoPath ?? ''}|favoriteColors:${_userProfile!.favoriteColors.join(',')}|createdAt:${_userProfile!.createdAt.toIso8601String()}|updatedAt:${_userProfile!.updatedAt?.toIso8601String() ?? ''}';
+      await prefs.setString('user_profile', profileJson);
+    }
+  }
+
+  // Update user profile
+  Future<void> updateUserProfile(UserProfile profile) async {
+    _userProfile = profile.copyWith(updatedAt: DateTime.now());
+    await saveUserProfile();
+    notifyListeners();
+  }
+
+  // Create initial user profile
+  Future<void> createUserProfile(String name) async {
+    _userProfile = UserProfile(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      createdAt: DateTime.now(),
+    );
+    await saveUserProfile();
+    notifyListeners();
+  }
+
+  // Outfit Tags Methods
+
+  // Load outfit tags from storage
+  Future<void> loadOutfitTags() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? tagsJson = prefs.getStringList('outfit_tags');
+
+    if (tagsJson != null) {
+      _outfitTags = tagsJson
+          .map(
+            (tag) => OutfitTag.fromJson(
+              Map.fromEntries(
+                tag.split('|').map((e) {
+                  final parts = e.split(':');
+                  return MapEntry(parts[0], parts[1]);
+                }),
+              ),
+            ),
+          )
+          .toList();
+      notifyListeners();
+    }
+  }
+
+  // Save outfit tags to storage
+  Future<void> saveOutfitTags() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> tagsJson = _outfitTags
+        .map(
+          (tag) =>
+              'id:${tag.id}|name:${tag.name}|color:${tag.color}|createdAt:${tag.createdAt.toIso8601String()}',
+        )
+        .toList();
+    await prefs.setStringList('outfit_tags', tagsJson);
+  }
+
+  // Add outfit tag
+  Future<void> addOutfitTag(OutfitTag tag) async {
+    _outfitTags.add(tag);
+    await saveOutfitTags();
+    notifyListeners();
+  }
+
+  // Delete outfit tag
+  Future<void> deleteOutfitTag(String id) async {
+    _outfitTags.removeWhere((tag) => tag.id == id);
+    // Remove tag from all tagged outfits
+    _taggedOutfits.removeWhere((tagged) => tagged.tagIds.contains(id));
+    await saveOutfitTags();
+    await saveTaggedOutfits();
+    notifyListeners();
+  }
+
+  // Tagged Outfits Methods
+
+  // Load tagged outfits from storage
+  Future<void> loadTaggedOutfits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? taggedJson = prefs.getStringList('tagged_outfits');
+
+    if (taggedJson != null) {
+      _taggedOutfits = taggedJson
+          .map(
+            (tagged) => TaggedOutfit.fromJson(
+              Map.fromEntries(
+                tagged.split('|').map((e) {
+                  final parts = e.split(':');
+                  return MapEntry(parts[0], parts[1]);
+                }),
+              ),
+            ),
+          )
+          .toList();
+      notifyListeners();
+    }
+  }
+
+  // Save tagged outfits to storage
+  Future<void> saveTaggedOutfits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> taggedJson = _taggedOutfits
+        .map(
+          (tagged) =>
+              'outfitId:${tagged.outfitId}|tagIds:${tagged.tagIds.join(',')}|isStarred:${tagged.isStarred}|createdAt:${tagged.createdAt.toIso8601String()}|updatedAt:${tagged.updatedAt?.toIso8601String() ?? ''}',
+        )
+        .toList();
+    await prefs.setStringList('tagged_outfits', taggedJson);
+  }
+
+  // Tag an outfit
+  Future<void> tagOutfit(
+    String outfitId,
+    List<String> tagIds, {
+    bool isStarred = false,
+  }) async {
+    final existingIndex = _taggedOutfits.indexWhere(
+      (tagged) => tagged.outfitId == outfitId,
+    );
+
+    if (existingIndex >= 0) {
+      _taggedOutfits[existingIndex] = _taggedOutfits[existingIndex].copyWith(
+        tagIds: tagIds,
+        isStarred: isStarred,
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      _taggedOutfits.add(
+        TaggedOutfit(
+          outfitId: outfitId,
+          tagIds: tagIds,
+          isStarred: isStarred,
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+
+    await saveTaggedOutfits();
+    notifyListeners();
+  }
+
+  // Toggle outfit star status
+  Future<void> toggleOutfitStar(String outfitId) async {
+    final existingIndex = _taggedOutfits.indexWhere(
+      (tagged) => tagged.outfitId == outfitId,
+    );
+
+    if (existingIndex >= 0) {
+      _taggedOutfits[existingIndex] = _taggedOutfits[existingIndex].copyWith(
+        isStarred: !_taggedOutfits[existingIndex].isStarred,
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      _taggedOutfits.add(
+        TaggedOutfit(
+          outfitId: outfitId,
+          tagIds: [],
+          isStarred: true,
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+
+    await saveTaggedOutfits();
+    notifyListeners();
+  }
+
+  // Get tags for an outfit
+  List<OutfitTag> getOutfitTags(String outfitId) {
+    final taggedOutfit = _taggedOutfits.firstWhere(
+      (tagged) => tagged.outfitId == outfitId,
+      orElse: () => TaggedOutfit(
+        outfitId: outfitId,
+        tagIds: [],
+        createdAt: DateTime.now(),
+      ),
+    );
+
+    return _outfitTags
+        .where((tag) => taggedOutfit.tagIds.contains(tag.id))
+        .toList();
+  }
+
+  // Check if outfit is starred
+  bool isOutfitStarred(String outfitId) {
+    final taggedOutfit = _taggedOutfits.firstWhere(
+      (tagged) => tagged.outfitId == outfitId,
+      orElse: () => TaggedOutfit(
+        outfitId: outfitId,
+        tagIds: [],
+        createdAt: DateTime.now(),
+      ),
+    );
+    return taggedOutfit.isStarred;
+  }
+
+  // Initialize all data
+  Future<void> initializeData() async {
+    await loadClothingItems();
+    await loadSavedOutfits();
+    await loadOutfitSchedules();
+    await loadUserProfile();
+    await loadOutfitTags();
+    await loadTaggedOutfits();
   }
 }
 
