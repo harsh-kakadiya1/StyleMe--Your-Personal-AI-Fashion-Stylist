@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class UserProfile {
   final String id;
   final String name;
@@ -31,20 +29,45 @@ class UserProfile {
     };
   }
 
+  static DateTime? _parseDate(String dateString) {
+    try {
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing date: $dateString, error: $e');
+      return null;
+    }
+  }
+
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'],
       name: json['name'],
-      birthday: json['birthday'] != null
-          ? DateTime.parse(json['birthday'])
-          : null,
+      birthday: json['birthday'] != null ? _parseDate(json['birthday']) : null,
       profilePhotoPath: json['profilePhotoPath'],
-      favoriteColors: List<String>.from(json['favoriteColors'] ?? []),
-      createdAt: DateTime.parse(json['createdAt']),
+      favoriteColors: _parseFavoriteColors(json['favoriteColors']),
+      createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
+          ? _parseDate(json['updatedAt'])
           : null,
     );
+  }
+
+  static List<String> _parseFavoriteColors(dynamic favoriteColors) {
+    if (favoriteColors == null) {
+      return [];
+    }
+
+    if (favoriteColors is List) {
+      return List<String>.from(favoriteColors);
+    }
+
+    if (favoriteColors is String) {
+      // Handle case where it's stored as a single string
+      return favoriteColors.isNotEmpty ? [favoriteColors] : [];
+    }
+
+    // Fallback for any other type
+    return [];
   }
 
   UserProfile copyWith({
@@ -128,13 +151,48 @@ class TaggedOutfit {
   factory TaggedOutfit.fromJson(Map<String, dynamic> json) {
     return TaggedOutfit(
       outfitId: json['outfitId'],
-      tagIds: List<String>.from(json['tagIds'] ?? []),
-      isStarred: json['isStarred'] ?? false,
+      tagIds: _parseTagIds(json['tagIds']),
+      isStarred: _parseIsStarred(json['isStarred']),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
     );
+  }
+
+  static bool _parseIsStarred(dynamic isStarred) {
+    if (isStarred == null) {
+      return false;
+    }
+
+    if (isStarred is bool) {
+      return isStarred;
+    }
+
+    if (isStarred is String) {
+      return isStarred.toLowerCase() == 'true';
+    }
+
+    // Fallback for any other type
+    return false;
+  }
+
+  static List<String> _parseTagIds(dynamic tagIds) {
+    if (tagIds == null) {
+      return [];
+    }
+
+    if (tagIds is List) {
+      return List<String>.from(tagIds);
+    }
+
+    if (tagIds is String) {
+      // Handle case where it's stored as a single string
+      return tagIds.isNotEmpty ? [tagIds] : [];
+    }
+
+    // Fallback for any other type
+    return [];
   }
 
   TaggedOutfit copyWith({

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import '../providers/theme_provider.dart';
 import '../providers/wardrobe_provider.dart';
-import '../models/user_profile.dart';
+import 'about_screen.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -341,7 +341,14 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.information_line,
                         'About',
                         'App version and information',
-                        () {},
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AboutScreen(),
+                            ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 16),

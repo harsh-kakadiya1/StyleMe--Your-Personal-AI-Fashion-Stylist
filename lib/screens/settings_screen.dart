@@ -50,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildTagsSection(outfitTags, wardrobeProvider),
                 const SizedBox(height: 24),
                 _buildStatsSection(wardrobeProvider),
+                const SizedBox(height: 24),
               ],
             ),
           );
@@ -537,6 +538,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     FlutterRemix.shirt_line,
                   ),
                 ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatItem(
                     'Saved Outfits',
@@ -556,6 +558,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     FlutterRemix.calendar_line,
                   ),
                 ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatItem(
                     'Favorite Outfits',
@@ -572,37 +575,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildStatItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+    return SizedBox(
+      height: 120,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
+            const SizedBox(height: 4),
+            Flexible(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

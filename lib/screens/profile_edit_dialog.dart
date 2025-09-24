@@ -71,7 +71,7 @@ class _ProfileEditDialogState extends State<ProfileEditDialog> {
     return Dialog(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.9,
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
           maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
         child: Container(
@@ -265,19 +265,21 @@ class _ProfileEditDialogState extends State<ProfileEditDialog> {
                   ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  _selectedBirthday != null
-                      ? _formatDate(_selectedBirthday!)
-                      : 'Select your birthday',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: _selectedBirthday != null
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                Expanded(
+                  child: Text(
+                    _selectedBirthday != null
+                        ? _formatDate(_selectedBirthday!)
+                        : 'Select your birthday',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: _selectedBirthday != null
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
                 if (_selectedBirthday != null)
                   IconButton(
                     onPressed: () {
@@ -287,6 +289,11 @@ class _ProfileEditDialogState extends State<ProfileEditDialog> {
                     },
                     icon: const Icon(FlutterRemix.close_line),
                     iconSize: 16,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    padding: EdgeInsets.zero,
                   ),
               ],
             ),

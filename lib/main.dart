@@ -185,7 +185,6 @@ class _StyleMeHomePageState extends State<StyleMeHomePage> {
     MakePairScreen(),
     SavedOutfitsScreen(),
     CalendarScreen(),
-    SettingsScreen(),
     ProfileScreen(),
   ];
 
@@ -245,11 +244,6 @@ class _StyleMeHomePageState extends State<StyleMeHomePage> {
               icon: Icon(FlutterRemix.calendar_line),
               activeIcon: Icon(FlutterRemix.calendar_fill),
               label: 'Calendar',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(FlutterRemix.settings_line),
-              activeIcon: Icon(FlutterRemix.settings_fill),
-              label: 'Settings',
             ),
             BottomNavigationBarItem(
               icon: Icon(FlutterRemix.user_line),
