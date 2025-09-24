@@ -8,6 +8,7 @@ import 'providers/theme_provider.dart';
 import 'screens/add_clothes_screen.dart';
 import 'screens/make_pair_screen.dart';
 import 'screens/saved_outfits_screen.dart';
+import 'screens/calendar_screen.dart';
 import 'screens/profile_screen.dart';
 
 void main() {
@@ -173,7 +174,7 @@ class _StyleMeHomePageState extends State<StyleMeHomePage> {
     AddClothesScreen(),
     MakePairScreen(),
     SavedOutfitsScreen(),
-    Center(child: Text('Coming Soon')),
+    CalendarScreen(),
     ProfileScreen(),
   ];
 
@@ -230,9 +231,9 @@ class _StyleMeHomePageState extends State<StyleMeHomePage> {
               label: 'Saved',
             ),
             BottomNavigationBarItem(
-              icon: Icon(FlutterRemix.magic_line),
-              activeIcon: Icon(FlutterRemix.magic_fill),
-              label: 'Suggest',
+              icon: Icon(FlutterRemix.calendar_line),
+              activeIcon: Icon(FlutterRemix.calendar_fill),
+              label: 'Calendar',
             ),
             BottomNavigationBarItem(
               icon: Icon(FlutterRemix.user_line),

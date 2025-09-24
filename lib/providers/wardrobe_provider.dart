@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/clothing_item.dart';
+import '../models/outfit_schedule.dart';
 
 class WardrobeProvider extends ChangeNotifier {
   List<ClothingItem> _clothingItems = [];
   List<OutfitCombination> _savedOutfits = [];
+  List<OutfitSchedule> _outfitSchedules = [];
 
   // Getters
   List<ClothingItem> get clothingItems => _clothingItems;
@@ -13,6 +15,7 @@ class WardrobeProvider extends ChangeNotifier {
   List<ClothingItem> get bottomWearItems =>
       _clothingItems.where((item) => item.category == 'bottom').toList();
   List<OutfitCombination> get savedOutfits => _savedOutfits;
+  List<OutfitSchedule> get outfitSchedules => _outfitSchedules;
 
   // Load clothing items from storage
   Future<void> loadClothingItems() async {
@@ -196,6 +199,116 @@ class WardrobeProvider extends ChangeNotifier {
       return topItem != null && bottomItem != null;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Outfit Schedule Methods
+
+  // Load outfit schedules from storage
+  Future<void> loadOutfitSchedules() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? schedulesJson = prefs.getStringList('outfit_schedules');
+
+    if (schedulesJson != null) {
+      _outfitSchedules = schedulesJson
+          .map(
+            (schedule) => OutfitSchedule.fromJson(
+              Map.fromEntries(
+                schedule.split('|').map((e) {
+                  final parts = e.split(':');
+                  return MapEntry(parts[0], parts[1]);
+                }),
+              ),
+            ),
+          )
+          .toList();
+
+      notifyListeners();
+    }
+  }
+
+  // Save outfit schedules to storage
+  Future<void> saveOutfitSchedules() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> schedulesJson = _outfitSchedules
+        .map(
+          (schedule) =>
+              'id:${schedule.id}|date:${schedule.date.toIso8601String()}|topId:${schedule.topId ?? ''}|bottomId:${schedule.bottomId ?? ''}|note:${schedule.note ?? ''}|createdAt:${schedule.createdAt.toIso8601String()}|updatedAt:${schedule.updatedAt?.toIso8601String() ?? ''}',
+        )
+        .toList();
+    await prefs.setStringList('outfit_schedules', schedulesJson);
+  }
+
+  // Add or update outfit schedule
+  Future<void> addOrUpdateOutfitSchedule(OutfitSchedule schedule) async {
+    final existingIndex = _outfitSchedules.indexWhere(
+      (s) => s.id == schedule.id,
+    );
+
+    if (existingIndex >= 0) {
+      _outfitSchedules[existingIndex] = schedule.copyWith(
+        updatedAt: DateTime.now(),
+      );
+    } else {
+      _outfitSchedules.add(schedule);
+    }
+
+    await saveOutfitSchedules();
+    notifyListeners();
+  }
+
+  // Get outfit schedule for a specific date
+  OutfitSchedule? getOutfitScheduleForDate(DateTime date) {
+    try {
+      return _outfitSchedules.firstWhere(
+        (schedule) =>
+            schedule.date.year == date.year &&
+            schedule.date.month == date.month &&
+            schedule.date.day == date.day,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Delete outfit schedule
+  Future<void> deleteOutfitSchedule(String id) async {
+    _outfitSchedules.removeWhere((schedule) => schedule.id == id);
+    await saveOutfitSchedules();
+    notifyListeners();
+  }
+
+  // Get outfit schedule by ID
+  OutfitSchedule? getOutfitScheduleById(String id) {
+    try {
+      return _outfitSchedules.firstWhere((schedule) => schedule.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Get outfit details for a schedule
+  Map<String, dynamic>? getScheduleOutfitDetails(String scheduleId) {
+    try {
+      final schedule = _outfitSchedules.firstWhere(
+        (schedule) => schedule.id == scheduleId,
+      );
+
+      if (schedule.topId != null && schedule.bottomId != null) {
+        final topItem = getClothingItemById(schedule.topId!);
+        final bottomItem = getClothingItemById(schedule.bottomId!);
+
+        if (topItem != null && bottomItem != null) {
+          return {
+            'schedule': schedule,
+            'topItem': topItem,
+            'bottomItem': bottomItem,
+          };
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }
