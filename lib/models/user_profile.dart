@@ -29,7 +29,11 @@ class UserProfile {
     };
   }
 
-  static DateTime? _parseDate(String dateString) {
+  static DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return null;
+    }
+
     try {
       return DateTime.parse(dateString);
     } catch (e) {
@@ -118,8 +122,21 @@ class OutfitTag {
       id: json['id'],
       name: json['name'],
       color: json['color'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
     );
+  }
+
+  static DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return null;
+    }
+
+    try {
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing date: $dateString, error: $e');
+      return null;
+    }
   }
 }
 
@@ -153,11 +170,24 @@ class TaggedOutfit {
       outfitId: json['outfitId'],
       tagIds: _parseTagIds(json['tagIds']),
       isStarred: _parseIsStarred(json['isStarred']),
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
+          ? _parseDate(json['updatedAt'])
           : null,
     );
+  }
+
+  static DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return null;
+    }
+
+    try {
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing date: $dateString, error: $e');
+      return null;
+    }
   }
 
   static bool _parseIsStarred(dynamic isStarred) {
