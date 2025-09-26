@@ -31,8 +31,12 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
     final provider = context.read<WardrobeProvider>();
 
     try {
+      // Show source selection dialog first
+      final ImageSource? source = await _showImageSourceDialog();
+      if (source == null) return;
+
       final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 80,
       );
 
@@ -61,6 +65,40 @@ class _AddClothesScreenState extends State<AddClothesScreen> {
     } catch (e) {
       scaffoldMessenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     }
+  }
+
+  Future<ImageSource?> _showImageSourceDialog() async {
+    return showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Use camera to take a new photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select from your photo library'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<String?> _showCategorySelectionDialog() async {
