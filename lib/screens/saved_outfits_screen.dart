@@ -181,7 +181,7 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
+        childAspectRatio: 0.75,
       ),
       itemCount: validOutfits.length,
       itemBuilder: (context, index) {
@@ -216,9 +216,9 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
             Positioned.fill(
               child: Column(
                 children: [
-                  // Top item (50% height)
+                  // Top item (55% height for better proportions)
                   Expanded(
-                    flex: 1,
+                    flex: 11,
                     child: Container(
                       decoration: BoxDecoration(
                         border: Border(
@@ -237,9 +237,9 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
                       ),
                     ),
                   ),
-                  // Bottom item (50% height)
+                  // Bottom item (45% height)
                   Expanded(
-                    flex: 1,
+                    flex: 9,
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(16),
@@ -434,16 +434,35 @@ class ImageDisplayWidget extends StatelessWidget {
       future: _checkFileExists(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Container(
+            color: Colors.grey[100],
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
         }
 
         if (snapshot.hasData && snapshot.data == true) {
-          return Image.file(
-            File(imagePath),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return _buildErrorWidget();
-            },
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildErrorWidget();
+                },
+              ),
+            ),
           );
         } else {
           return _buildErrorWidget();
@@ -463,15 +482,15 @@ class ImageDisplayWidget extends StatelessWidget {
 
   Widget _buildErrorWidget() {
     return Container(
-      color: Colors.grey[200],
+      color: Colors.grey[100],
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-          const SizedBox(height: 8),
+          Icon(Icons.broken_image, size: 32, color: Colors.grey[400]),
+          const SizedBox(height: 4),
           Text(
             'Image not found',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(color: Colors.grey[600], fontSize: 10),
           ),
         ],
       ),
