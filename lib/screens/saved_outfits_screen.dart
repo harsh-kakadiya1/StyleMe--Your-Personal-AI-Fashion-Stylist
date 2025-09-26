@@ -94,41 +94,41 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
               ],
             ),
           ),
-          child: Column(
-            children: [
-              // Header section
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.checkroom,
-                      size: 60,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Saved Outfits',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+          child: CustomScrollView(
+            slivers: [
+              // Header section as part of scrollable content
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.checkroom,
+                        size: 60,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${wardrobeProvider.savedOutfits.where((outfit) => wardrobeProvider.isOutfitValid(outfit.id)).length} outfit combinations saved',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Saved Outfits',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${wardrobeProvider.savedOutfits.where((outfit) => wardrobeProvider.isOutfitValid(outfit.id)).length} outfit combinations saved',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
               // Outfits grid
-              Expanded(
-                child: savedOutfits.isEmpty
-                    ? _buildEmptyState()
-                    : _buildOutfitsGrid(savedOutfits, wardrobeProvider),
-              ),
+              savedOutfits.isEmpty
+                  ? SliverFillRemaining(child: _buildEmptyState())
+                  : _buildOutfitsSliver(savedOutfits, wardrobeProvider),
             ],
           ),
         );
@@ -162,7 +162,7 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
     );
   }
 
-  Widget _buildOutfitsGrid(
+  Widget _buildOutfitsSliver(
     List<dynamic> savedOutfits,
     WardrobeProvider provider,
   ) {
@@ -172,34 +172,35 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
         .toList();
 
     if (validOutfits.isEmpty) {
-      return _buildEmptyState();
+      return SliverFillRemaining(child: _buildEmptyState());
     }
 
-    return GridView.builder(
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.75,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final outfit = validOutfits[index];
+          final outfitDetails = provider.getOutfitDetails(outfit.id);
+
+          if (outfitDetails == null) {
+            return _buildErrorCard();
+          }
+
+          final topItem = outfitDetails['topItem'] as ClothingItem;
+          final bottomItem = outfitDetails['bottomItem'] as ClothingItem;
+
+          return GestureDetector(
+            onTap: () => _showOutfitDetailDialog(outfit, topItem, bottomItem),
+            child: _buildOutfitCard(outfit, topItem, bottomItem),
+          );
+        }, childCount: validOutfits.length),
       ),
-      itemCount: validOutfits.length,
-      itemBuilder: (context, index) {
-        final outfit = validOutfits[index];
-        final outfitDetails = provider.getOutfitDetails(outfit.id);
-
-        if (outfitDetails == null) {
-          return _buildErrorCard();
-        }
-
-        final topItem = outfitDetails['topItem'] as ClothingItem;
-        final bottomItem = outfitDetails['bottomItem'] as ClothingItem;
-
-        return GestureDetector(
-          onTap: () => _showOutfitDetailDialog(outfit, topItem, bottomItem),
-          child: _buildOutfitCard(outfit, topItem, bottomItem),
-        );
-      },
     );
   }
 
