@@ -317,7 +317,7 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.notification_3_line,
                         'Notifications',
                         'Manage your notifications',
-                        () {},
+                        () => _showComingSoonDialog(context, 'Notifications'),
                       ),
 
                       _buildSettingsItem(
@@ -325,7 +325,7 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.shield_user_line,
                         'Privacy',
                         'Privacy and security settings',
-                        () {},
+                        () => _showComingSoonDialog(context, 'Privacy'),
                       ),
 
                       _buildSettingsItem(
@@ -333,7 +333,7 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.question_line,
                         'Help & Support',
                         'Get help and support',
-                        () {},
+                        () => _showComingSoonDialog(context, 'Help & Support'),
                       ),
 
                       _buildSettingsItem(
@@ -433,5 +433,64 @@ class ProfileScreen extends StatelessWidget {
       'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  void _showComingSoonDialog(BuildContext context, String featureName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                FlutterRemix.tools_line,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text('Coming Soon'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The $featureName feature is currently under development.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'We\'re working hard to bring you this feature soon. Thank you for your patience!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Got it',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
