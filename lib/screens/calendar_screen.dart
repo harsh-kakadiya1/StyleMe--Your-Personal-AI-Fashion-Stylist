@@ -331,43 +331,46 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildClothingItemPreview(ClothingItem? item, String label) {
     return Column(
       children: [
-        Container(
-          height: 80,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Theme.of(context).dividerColor),
+        GestureDetector(
+          onTap: item != null ? () => _showImageDialog(item) : null,
+          child: Container(
+            height: 80,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: item != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(item.imagePath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Theme.of(context).colorScheme.surface,
+                          child: Icon(
+                            item.category == 'top'
+                                ? FlutterRemix.shirt_line
+                                : FlutterRemix.shopping_bag_line,
+                            size: 32,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : Container(
+                    color: Theme.of(context).colorScheme.surface,
+                    child: Icon(
+                      FlutterRemix.add_line,
+                      size: 32,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
           ),
-          child: item != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(item.imagePath),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Theme.of(context).colorScheme.surface,
-                        child: Icon(
-                          item.category == 'top'
-                              ? FlutterRemix.shirt_line
-                              : FlutterRemix.shopping_bag_line,
-                          size: 32,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      );
-                    },
-                  ),
-                )
-              : Container(
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Icon(
-                    FlutterRemix.add_line,
-                    size: 32,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                ),
         ),
         const SizedBox(height: 4),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
@@ -386,6 +389,148 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _showImageDialog(ClothingItem item) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Stack(
+            children: [
+              // Full screen image
+              Center(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.95,
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.file(
+                      File(item.imagePath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                item.category == 'top'
+                                    ? FlutterRemix.shirt_line
+                                    : FlutterRemix.shopping_bag_line,
+                                size: 60,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Image not found',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+              // Close button
+              Positioned(
+                top: 40,
+                right: 20,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Item details at bottom
+              Positioned(
+                bottom: 40,
+                left: 20,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            item.category == 'top'
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            item.type,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${item.category == 'top' ? 'Top' : 'Bottom'} Wear',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Added: ${_formatDate(item.addedDate)}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showOutfitPicker({OutfitSchedule? existingSchedule}) async {
