@@ -1,4 +1,4 @@
-# StyleMe - Your Personal AI Fashion Stylist
+# StyleMe - Your Personal Fashion Stylist
 
 StyleMe is a Flutter-based mobile application designed to be your personal fashion assistant. It helps you digitize your wardrobe, create stylish outfits, and discover new looks with AI-powered suggestions. Perfect for fashion enthusiasts who want to organize their closet and elevate their style.
 
