@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_remix/flutter_remix.dart';
 import '../providers/wardrobe_provider.dart';
 import '../models/clothing_item.dart';
 import 'dart:io';
@@ -18,8 +19,7 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
     // Load saved outfits when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<WardrobeProvider>();
-      provider.loadClothingItems();
-      provider.loadSavedOutfits();
+      provider.initializeData();
     });
   }
 
@@ -47,6 +47,34 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
     }
   }
 
+  Future<void> _toggleStar(String outfitId) async {
+    try {
+      await context.read<WardrobeProvider>().toggleOutfitStar(outfitId);
+
+      if (mounted) {
+        final provider = context.read<WardrobeProvider>();
+        final isStarred = provider.isOutfitStarred(outfitId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isStarred ? 'Added to favorites' : 'Removed from favorites',
+            ),
+            backgroundColor: isStarred ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating favorite: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<WardrobeProvider>(
@@ -66,41 +94,41 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
               ],
             ),
           ),
-          child: Column(
-            children: [
-              // Header section
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.checkroom,
-                      size: 60,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Saved Outfits',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+          child: CustomScrollView(
+            slivers: [
+              // Header section as part of scrollable content
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.checkroom,
+                        size: 60,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${wardrobeProvider.savedOutfits.where((outfit) => wardrobeProvider.isOutfitValid(outfit.id)).length} outfit combinations saved',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Saved Outfits',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${wardrobeProvider.savedOutfits.where((outfit) => wardrobeProvider.isOutfitValid(outfit.id)).length} outfit combinations saved',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
               // Outfits grid
-              Expanded(
-                child: savedOutfits.isEmpty
-                    ? _buildEmptyState()
-                    : _buildOutfitsGrid(savedOutfits, wardrobeProvider),
-              ),
+              savedOutfits.isEmpty
+                  ? SliverFillRemaining(child: _buildEmptyState())
+                  : _buildOutfitsSliver(savedOutfits, wardrobeProvider),
             ],
           ),
         );
@@ -134,7 +162,7 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
     );
   }
 
-  Widget _buildOutfitsGrid(
+  Widget _buildOutfitsSliver(
     List<dynamic> savedOutfits,
     WardrobeProvider provider,
   ) {
@@ -144,31 +172,35 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
         .toList();
 
     if (validOutfits.isEmpty) {
-      return _buildEmptyState();
+      return SliverFillRemaining(child: _buildEmptyState());
     }
 
-    return GridView.builder(
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.75,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final outfit = validOutfits[index];
+          final outfitDetails = provider.getOutfitDetails(outfit.id);
+
+          if (outfitDetails == null) {
+            return _buildErrorCard();
+          }
+
+          final topItem = outfitDetails['topItem'] as ClothingItem;
+          final bottomItem = outfitDetails['bottomItem'] as ClothingItem;
+
+          return GestureDetector(
+            onTap: () => _showOutfitDetailDialog(outfit, topItem, bottomItem),
+            child: _buildOutfitCard(outfit, topItem, bottomItem),
+          );
+        }, childCount: validOutfits.length),
       ),
-      itemCount: validOutfits.length,
-      itemBuilder: (context, index) {
-        final outfit = validOutfits[index];
-        final outfitDetails = provider.getOutfitDetails(outfit.id);
-
-        if (outfitDetails == null) {
-          return _buildErrorCard();
-        }
-
-        final topItem = outfitDetails['topItem'] as ClothingItem;
-        final bottomItem = outfitDetails['bottomItem'] as ClothingItem;
-
-        return _buildOutfitCard(outfit, topItem, bottomItem);
-      },
     );
   }
 
@@ -188,9 +220,9 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
             Positioned.fill(
               child: Column(
                 children: [
-                  // Top item (50% height)
+                  // Top item (55% height for better proportions)
                   Expanded(
-                    flex: 1,
+                    flex: 11,
                     child: Container(
                       decoration: BoxDecoration(
                         border: Border(
@@ -209,9 +241,9 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
                       ),
                     ),
                   ),
-                  // Bottom item (50% height)
+                  // Bottom item (45% height)
                   Expanded(
-                    flex: 1,
+                    flex: 9,
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(16),
@@ -226,21 +258,56 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
               ),
             ),
 
-            // Delete button overlay
+            // Action buttons overlay
             Positioned(
               top: 8,
               right: 8,
-              child: GestureDetector(
-                onTap: () => _showDeleteDialog(outfit.id),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[300]!, width: 1),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Star button
+                  GestureDetector(
+                    onTap: () => _toggleStar(outfit.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                      ),
+                      child: Consumer<WardrobeProvider>(
+                        builder: (context, provider, child) {
+                          final isStarred = provider.isOutfitStarred(outfit.id);
+                          return Icon(
+                            isStarred
+                                ? FlutterRemix.star_fill
+                                : FlutterRemix.star_line,
+                            size: 16,
+                            color: isStarred ? Colors.amber : Colors.grey[600],
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                  child: Icon(Icons.close, size: 16, color: Colors.grey[600]),
-                ),
+                  const SizedBox(width: 4),
+                  // Delete button
+                  GestureDetector(
+                    onTap: () => _showDeleteDialog(outfit.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -344,6 +411,341 @@ class _SavedOutfitsScreenState extends State<SavedOutfitsScreen> {
     );
   }
 
+  void _showOutfitDetailDialog(
+    dynamic outfit,
+    ClothingItem topItem,
+    ClothingItem bottomItem,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+              maxWidth: MediaQuery.of(context).size.width * 0.95,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.checkroom,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${topItem.type} + ${bottomItem.type}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              _formatDate(outfit.createdDate),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Consumer<WardrobeProvider>(
+                        builder: (context, provider, child) {
+                          final isStarred = provider.isOutfitStarred(outfit.id);
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              _toggleStar(outfit.id);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                isStarred
+                                    ? FlutterRemix.star_fill
+                                    : FlutterRemix.star_line,
+                                size: 20,
+                                color: isStarred
+                                    ? Colors.amber
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            FlutterRemix.close_line,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Outfit Display
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // Top Item
+                        Expanded(
+                          flex: 11,
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: ImageDisplayWidget(
+                                      imagePath: topItem.imagePath,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withValues(alpha: 0.7),
+                                          ],
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'TOP WEAR',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          Text(
+                                            topItem.type,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Bottom Item
+                        Expanded(
+                          flex: 9,
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: ImageDisplayWidget(
+                                      imagePath: bottomItem.imagePath,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withValues(alpha: 0.7),
+                                          ],
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'BOTTOM WEAR',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          Text(
+                                            bottomItem.type,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Action Buttons
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _showDeleteDialog(outfit.id);
+                          },
+                          icon: const Icon(FlutterRemix.delete_bin_line),
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(FlutterRemix.check_line),
+                          label: const Text('Close'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -371,16 +773,35 @@ class ImageDisplayWidget extends StatelessWidget {
       future: _checkFileExists(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Container(
+            color: Colors.grey[100],
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
         }
 
         if (snapshot.hasData && snapshot.data == true) {
-          return Image.file(
-            File(imagePath),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return _buildErrorWidget();
-            },
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildErrorWidget();
+                },
+              ),
+            ),
           );
         } else {
           return _buildErrorWidget();
@@ -400,15 +821,15 @@ class ImageDisplayWidget extends StatelessWidget {
 
   Widget _buildErrorWidget() {
     return Container(
-      color: Colors.grey[200],
+      color: Colors.grey[100],
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-          const SizedBox(height: 8),
+          Icon(Icons.broken_image, size: 32, color: Colors.grey[400]),
+          const SizedBox(height: 4),
           Text(
             'Image not found',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(color: Colors.grey[600], fontSize: 10),
           ),
         ],
       ),

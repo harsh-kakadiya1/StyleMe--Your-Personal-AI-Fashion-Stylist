@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../providers/theme_provider.dart';
+import '../providers/wardrobe_provider.dart';
+import 'about_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer2<ThemeProvider, WardrobeProvider>(
+      builder: (context, themeProvider, wardrobeProvider, child) {
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -30,37 +34,125 @@ class ProfileScreen extends StatelessWidget {
                 // Profile Header
                 Container(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        child: Icon(
-                          FlutterRemix.user_fill,
-                          size: 50,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'StyleMe User',
-                        style: GoogleFonts.prata(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onBackground,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Fashion Enthusiast',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onBackground.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+                  child: Consumer<WardrobeProvider>(
+                    builder: (context, wardrobeProvider, child) {
+                      final userProfile = wardrobeProvider.userProfile;
+
+                      return Column(
+                        children: [
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.1),
+                                backgroundImage:
+                                    userProfile?.profilePhotoPath != null
+                                    ? FileImage(
+                                        File(userProfile!.profilePhotoPath!),
+                                      )
+                                    : null,
+                                child: userProfile?.profilePhotoPath == null
+                                    ? Icon(
+                                        FlutterRemix.user_fill,
+                                        size: 60,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      )
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SettingsScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      FlutterRemix.edit_line,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            userProfile?.name ?? 'StyleMe User',
+                            style: GoogleFonts.prata(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onBackground,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            userProfile?.birthday != null
+                                ? 'Born ${_formatDate(userProfile!.birthday!)}'
+                                : 'Fashion Enthusiast',
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onBackground.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          if (userProfile?.favoriteColors.isNotEmpty ==
+                              true) ...[
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              children: userProfile!.favoriteColors.take(5).map(
+                                (color) {
+                                  return Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Color(
+                                        int.parse(
+                                          color.replaceFirst('#', '0xff'),
+                                        ),
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.outline,
+                                        width: 1,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ).toList(),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
 
@@ -207,10 +299,25 @@ class ProfileScreen extends StatelessWidget {
 
                       _buildSettingsItem(
                         context,
+                        FlutterRemix.settings_line,
+                        'Settings',
+                        'Manage your profile and preferences',
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                      _buildSettingsItem(
+                        context,
                         FlutterRemix.notification_3_line,
                         'Notifications',
                         'Manage your notifications',
-                        () {},
+                        () => _showComingSoonDialog(context, 'Notifications'),
                       ),
 
                       _buildSettingsItem(
@@ -218,7 +325,7 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.shield_user_line,
                         'Privacy',
                         'Privacy and security settings',
-                        () {},
+                        () => _showComingSoonDialog(context, 'Privacy'),
                       ),
 
                       _buildSettingsItem(
@@ -226,7 +333,7 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.question_line,
                         'Help & Support',
                         'Get help and support',
-                        () {},
+                        () => _showComingSoonDialog(context, 'Help & Support'),
                       ),
 
                       _buildSettingsItem(
@@ -234,7 +341,14 @@ class ProfileScreen extends StatelessWidget {
                         FlutterRemix.information_line,
                         'About',
                         'App version and information',
-                        () {},
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AboutScreen(),
+                            ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 16),
@@ -300,6 +414,83 @@ class ProfileScreen extends StatelessWidget {
           onTap: onTap,
         ),
       ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  void _showComingSoonDialog(BuildContext context, String featureName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                FlutterRemix.tools_line,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text('Coming Soon'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The $featureName feature is currently under development.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'We\'re working hard to bring you this feature soon. Thank you for your patience!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Got it',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
