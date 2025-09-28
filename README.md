@@ -95,7 +95,7 @@ The app consists of 5 main screens accessible via bottom navigation:
 
 ## Technology Stack
 
-### 📱 Framework & Language
+### Framework & Language
 - **[Flutter](https://flutter.dev/)** `^3.8.1` - Cross-platform UI toolkit for building natively compiled applications
 - **[Dart](https://dart.dev/)** - Programming language optimized for building UI
 
@@ -154,11 +154,9 @@ lib/
 
 ## Screenshots
 
-We will add screenshots here soon!
-<!-- 
 | Wardrobe Screen | Outfit Pairing | Saved Outfits | Profile Settings |
 |---|---|---|---|
-| *Add and manage clothing items* | *Create outfit combinations* | *View saved combinations* | *Theme and settings* | -->
+| ![Screenshot_20250928_195757](https://github.com/user-attachments/assets/aa68668b-df34-45bf-8f35-bd67af078d34) | ![Screenshot_20250928_195812](https://github.com/user-attachments/assets/8bbefb0f-e471-401f-8875-b806f93f3bd5) | ![Screenshot_20250928_195840](https://github.com/user-attachments/assets/8142fc37-9724-477c-8784-cd8404c2563a) | ![Screenshot_20250928_195905](https://github.com/user-attachments/assets/92f11ac3-8598-421f-a96c-661d82489dff) |
 
 ## Key Features Explained
 
@@ -203,7 +201,7 @@ We welcome contributions from the community! Here's how you can help:
 - Test your changes thoroughly
 - Update documentation as needed
 
-## � Future Roadmap
+## Future Roadmap
 
 ### AI Features (In Development)
 - **Smart Outfit Suggestions**: AI-powered recommendations based on your wardrobe
