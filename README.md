@@ -5,7 +5,7 @@ StyleMe is a comprehensive Flutter-based mobile application designed to be your 
 ## Features
 
 ### Core Features (Fully Implemented)
-- * Smart Wardrobe Management:** 
+- **Smart Wardrobe Management:** 
   - Add clothing items with camera or gallery photos
   - Categorize items (Top wear, Bottom wear) with detailed types
   - Search and filter through your wardrobe
@@ -124,19 +124,19 @@ The app consists of 5 main screens accessible via bottom navigation:
 ### App Architecture
 ```
 lib/
-├── main.dart                 # App entry point and navigation
-├── models/                   # Data models
-│   └── clothing_item.dart    # ClothingItem and OutfitCombination
-├── providers/                # State management
-│   ├── wardrobe_provider.dart    # Wardrobe and outfit logic
-│   └── theme_provider.dart       # Theme management
-├── screens/                  # UI screens
-│   ├── add_clothes_screen.dart    # Wardrobe management
-│   ├── make_pair_screen.dart      # Outfit creation
-│   ├── saved_outfits_screen.dart  # Saved combinations
-│   └── profile_screen.dart        # Settings and profile
-└── widgets/                  # Reusable components
-    └── image_display_widget.dart  # Image handling
+├── main.dart                       # App entry point and navigation
+├── models/                         # Data models
+│   └── clothing_item.dart          # ClothingItem and OutfitCombination
+├── providers/                      # State management
+│   ├── wardrobe_provider.dart      # Wardrobe and outfit logic
+│   └── theme_provider.dart         # Theme management
+├── screens/                        # UI screens
+│   ├── add_clothes_screen.dart     # Wardrobe management
+│   ├── make_pair_screen.dart       # Outfit creation
+│   ├── saved_outfits_screen.dart   # Saved combinations
+│   └── profile_screen.dart         # Settings and profile
+└── widgets/                        # Reusable components
+    └── image_display_widget.dart   # Image handling
 ```
 
 ### UI Components
